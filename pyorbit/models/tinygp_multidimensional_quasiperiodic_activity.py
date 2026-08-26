@@ -308,15 +308,16 @@ class TinyGP_Multidimensional_QuasiPeriodicActivity(AbstractModel, AbstractGauss
         )
 
         gp = _build_tinygp_multidimensional(theta_dict)
-        _, cond_gp = gp.condition(theta_dict['y'], theta_dict['x0_predict'])
-
-        #mu = cond_gp.mean
-        #std = np.sqrt(cond_gp.variance)
-        mu_full = cond_gp.loc # or cond_gp.mean?
-        mu = mu_full[l_nstart:l_nend]
-
         if return_variance:
-            std = np.sqrt(cond_gp.variance)[l_nstart:l_nend]
+            Ks = gp.kernel(gp.X, theta_dict['x0_predict'])
+            A = gp.solver.solve_triangular(Ks, transpose=False)
+            Kss_diag = jax.vmap(gp.kernel.evaluate)(theta_dict['x0_predict'], theta_dict['x0_predict'])
+            var_full = Kss_diag - jnp.sum(A**2, axis=0)
+            _, _, mu_full = gp._condition(theta_dict['y'], theta_dict['x0_predict'], True, None)
+            mu = mu_full[l_nstart:l_nend]
+            std = np.sqrt(np.maximum(0.0, np.asarray(var_full)))[l_nstart:l_nend]
             return mu, std
         else:
+            _, _, mu_full = gp._condition(theta_dict['y'], theta_dict['x0_predict'], True, None)
+            mu = mu_full[l_nstart:l_nend]
             return mu

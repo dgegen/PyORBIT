@@ -1724,7 +1724,7 @@ def pyorbit_getresults(config_in, sampler_name, plot_dictionary):
                                         bjd_plot[dataset_name]['range'] / dataset.n / 10.))
             
             input_step_size = plot_config_parameters.get('model_step_size', None)
-            if input_step_size is not None:
+            if input_step_size is not None and isinstance(plot_config_parameters['model_step_size'], dict):
                 if dataset.kind in activity_datatype or dataset.kind == 'radial_velocity':
                     input_step_size = plot_config_parameters['model_step_size'].get('activity', input_step_size)                
                 if dataset.kind == 'radial_velocity':

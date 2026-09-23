@@ -382,8 +382,8 @@ class TinyGP_Multidimensional_QuasiPeriodicSquaredExponentialActivity(AbstractMo
         # https://github.com/dfm/tinygp/pull/281 (not yet on a PyPI release as of this
         # writing). On older tinygp, predict(return_var=True) routes through condition(),
         # which builds and Cholesky-factorizes that dense matrix same as the manual
-        # Ks/A/Kss_diag computation this replaces -- see that PR and pyproject.toml's
-        # [tool.uv.sources] override for how this repo pins the fixed commit.
+        # Ks/A/Kss_diag computation this replaces -- callers need tinygp installed from
+        # a commit past that merge for this to actually avoid the OOM.
         if return_variance:
             mu_full, var_full = gp.predict(theta_dict['y'], theta_dict['x0_predict'], return_var=True)
             mu = mu_full[l_nstart:l_nend]

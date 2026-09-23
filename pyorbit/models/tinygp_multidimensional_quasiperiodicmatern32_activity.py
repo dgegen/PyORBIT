@@ -272,8 +272,8 @@ class TinyGP_Multidimensional_QuasiPeriodicMatern32Activity(AbstractModel, Abstr
 
         # Selective participation in the instrumental Matern-3/2 term: defaults to False for
         # every dataset, so activity indicators never silently pick up an instrumental term
-        # meant for the RVs. Only the block form is supported (no <dataset>: {matern32_datasets:}
-        # shorthand), matching how the keyword is documented in the configs.
+        # meant for the RVs. Only the block form (matern32_datasets: {dataset: True/False})
+        # is supported, matching derivative_quasiperiodic's kwargs pattern above.
         matern32_dict = kwargs.get('matern32_datasets', {})
         use_matern32 = matern32_dict.get(dataset.name_ref, False)
 
@@ -398,8 +398,8 @@ class TinyGP_Multidimensional_QuasiPeriodicMatern32Activity(AbstractModel, Abstr
         # https://github.com/dfm/tinygp/pull/281 (not yet on a PyPI release as of this
         # writing). On older tinygp, predict(return_var=True) routes through condition(),
         # which builds and Cholesky-factorizes that dense matrix same as the manual
-        # Ks/A/Kss_diag computation this replaces -- see that PR and pyproject.toml's
-        # [tool.uv.sources] override for how this repo pins the fixed commit.
+        # Ks/A/Kss_diag computation this replaces -- callers need tinygp installed from
+        # a commit past that merge for this to actually avoid the OOM.
         if return_variance:
             mu_full, var_full = gp.predict(theta_dict['y'], theta_dict['x0_predict'], return_var=True)
             mu = mu_full[l_nstart:l_nend]

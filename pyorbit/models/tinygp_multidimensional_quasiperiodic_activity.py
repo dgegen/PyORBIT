@@ -308,16 +308,19 @@ class TinyGP_Multidimensional_QuasiPeriodicActivity(AbstractModel, AbstractGauss
         )
 
         gp = _build_tinygp_multidimensional(theta_dict)
+        # NOTE: gp.predict() only avoids materializing the dense (N_test x N_test) test
+        # covariance on tinygp versions that include the return_var fast path added in
+        # https://github.com/dfm/tinygp/pull/281 (not yet on a PyPI release as of this
+        # writing). On older tinygp, predict(return_var=True) routes through condition(),
+        # which builds and Cholesky-factorizes that dense matrix same as the manual
+        # Ks/A/Kss_diag computation this replaces -- see that PR and pyproject.toml's
+        # [tool.uv.sources] override for how this repo pins the fixed commit.
         if return_variance:
-            Ks = gp.kernel(gp.X, theta_dict['x0_predict'])
-            A = gp.solver.solve_triangular(Ks, transpose=False)
-            Kss_diag = jax.vmap(gp.kernel.evaluate)(theta_dict['x0_predict'], theta_dict['x0_predict'])
-            var_full = Kss_diag - jnp.sum(A**2, axis=0)
-            _, _, mu_full = gp._condition(theta_dict['y'], theta_dict['x0_predict'], True, None)
+            mu_full, var_full = gp.predict(theta_dict['y'], theta_dict['x0_predict'], return_var=True)
             mu = mu_full[l_nstart:l_nend]
             std = np.sqrt(np.maximum(0.0, np.asarray(var_full)))[l_nstart:l_nend]
             return mu, std
         else:
-            _, _, mu_full = gp._condition(theta_dict['y'], theta_dict['x0_predict'], True, None)
+            mu_full = gp.predict(theta_dict['y'], theta_dict['x0_predict'])
             mu = mu_full[l_nstart:l_nend]
             return mu

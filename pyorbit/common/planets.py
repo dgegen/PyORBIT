@@ -165,6 +165,13 @@ class CommonPlanets(AbstractCommon):
                 'spaces': 'Linear',
                 'fixed' : 1.0,
             },
+        'T_41':
+            {
+                'bounds': [0.001, 2.0],
+                'priors': ['Uniform', []],
+                'spaces': 'Linear',
+                'fixed' : 0.1,
+            },
         'b':
             {
                 'bounds': [0.0, 2.0],
@@ -247,6 +254,7 @@ class CommonPlanets(AbstractCommon):
 
         self.use_inclination = False
         self.use_semimajor_axis = False
+        self.use_transit_duration = False
         self.use_time_inferior_conjunction = False
         self.use_mass = False
         self.use_scaled_mass = False
@@ -306,6 +314,26 @@ class CommonPlanets(AbstractCommon):
         if self.use_semimajor_axis:
             self.compute_semimajor_axis = False
             print('    semi-major axis replacing stellar density as a free parameter: ', True)
+
+        """ Total transit duration T_41 (days) replacing the scaled semi-major axis:
+            a_Rs follows from (T_41, b, R_Rs, P) by inverting Winn (2010) Eq. 14
+            exactly. Sampling (T_41, b, R_Rs) removes the curved (a_Rs, b, R_Rs)
+            ridge of a transit that constrains the duration but not b. Circular
+            orbits and the impact parameter only. """
+        self.use_transit_duration = kwargs.get('use_transit_duration', self.use_transit_duration)
+        if self.use_transit_duration:
+            """ The Keplerian RV model has no T_41 branch: with a mass keyword it would add a
+                separate free a_Rs next to the transit's derived one. Photometry only. """
+            if self.use_semimajor_axis or kwargs.get('use_inclination', False) \
+                    or not (self.orbit == 'circular' or self.use_circular_orbit) \
+                    or kwargs.get('use_mass', False) or kwargs.get('use_scaled_mass', False) \
+                    or kwargs.get('use_stellar_scaled_mass', False):
+                print("UNRECOVERABLE ERROR model {0:s} :".format(self.common_ref))
+                print('    use_transit_duration needs a circular orbit, the impact parameter, '
+                      'no use_semimajor_axis and no planet mass (photometry-only fits)')
+                quit()
+            self.compute_semimajor_axis = False
+            print('    total transit duration T_41 replacing stellar density as a free parameter: ', True)
 
         self.use_inclination = kwargs.get('use_inclination', self.use_inclination)
         if self.use_inclination:

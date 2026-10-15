@@ -1,4 +1,4 @@
-from pyorbit.subroutines.common import np, convert_rho_to_ars, convert_b_to_i
+from pyorbit.subroutines.common import np, convert_rho_to_ars, convert_b_to_i, convert_t41_to_ars
 import pyorbit.subroutines.constants as constants
 import pyorbit.subroutines.kepler_exo as kepler_exo
 from pyorbit.keywords_definitions import *
@@ -16,6 +16,7 @@ class AbstractTransit(object):
 
         """ Keywords inherited from Planet common model (with switched logical sign)"""
         self.compute_semimajor_axis = True
+        self.compute_semimajor_axis_from_duration = False
         self.compute_inclination = True
         self.compute_time_inferior_conjunction = False
 
@@ -67,6 +68,11 @@ class AbstractTransit(object):
             """ a is the semi-major axis (in units of stellar radii) """
             self.list_pams_common.update(['a_Rs'])
             self.compute_semimajor_axis = False
+        elif getattr(mc.common_models[self.planet_ref], 'use_transit_duration', False):
+            """ T_41 is the total transit duration (days); a_Rs is derived """
+            self.list_pams_common.update(['T_41'])
+            self.compute_semimajor_axis = False
+            self.compute_semimajor_axis_from_duration = True
         else:
             if 'mass' in multivariate_pams and 'radius' in multivariate_pams:
                 self.list_pams_common.update(['mass'])
@@ -321,6 +327,11 @@ class AbstractTransit(object):
 
         if self.compute_semimajor_axis:
             parameter_values[prepend+'a_Rs'] = convert_rho_to_ars(parameter_values[prepend+'P'], parameter_values['density'])
+
+        if self.compute_semimajor_axis_from_duration:
+            parameter_values[prepend+'a_Rs'] = convert_t41_to_ars(
+                parameter_values[prepend+'T_41'], parameter_values[prepend+'b'],
+                parameter_values[prepend+'R_Rs'], parameter_values[prepend+'P'])
 
         if self.compute_inclination:
             parameter_values[prepend+'i'] = convert_b_to_i(

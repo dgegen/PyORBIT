@@ -598,6 +598,18 @@ def convert_rho_to_ars(P, rho):
                     * rho * constants.rho_Sun / (3. * np.pi), 1./3.)
 
 
+def convert_t41_to_ars(T_41, b, k, P):
+    """ Scaled semi-major axis of a circular orbit from the total transit duration.
+
+    Exact inverse of Winn (2010) Eq. 14 with sin i = sqrt(1 - b^2/a^2):
+    sin^2(pi T_41 / P) (a^2 - b^2) = (1 + k)^2 - b^2. For b >= 1 + k there is no
+    transit at any a; the chord is clipped to 0, giving a = b, i = 0 deg and a flat
+    model, as the a_Rs parametrisation gives there.
+    """
+    chord2 = np.clip((1. + k)**2 - b**2, 0., None)
+    return np.sqrt(chord2 / np.sin(np.pi * T_41 / P)**2 + b**2)
+
+
 def convert_ars_to_a(a, Rs):
     return a * Rs * constants.RsunAU
 

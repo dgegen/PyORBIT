@@ -359,6 +359,13 @@ def get_planet_parameters(mc, theta, verbose=False):
                     parameter_values[par] = parameter_values[par] * \
                         np.ones(n_samplings)
 
+            if 'a_Rs' not in parameter_values.keys() and 'T_41' in parameter_values.keys():
+                derived_parameters['a_Rs'] = True
+                parameter_values['a_Rs'] = convert_t41_to_ars(parameter_values['T_41'],
+                                                        parameter_values['b'],
+                                                        parameter_values['R_Rs'],
+                                                        parameter_values['P'])
+
             if 'a_Rs' not in parameter_values.keys() and 'density' in stellar_parameters.keys():
                 derived_parameters['a_Rs'] = True
                 parameter_values['a_Rs'] = convert_rho_to_ars(parameter_values['P'],
@@ -448,11 +455,13 @@ def get_planet_parameters(mc, theta, verbose=False):
             try:
                 k = parameter_values['R_Rs']
 
-                parameter_values['T_41'] = parameter_values['P'] / np.pi \
-                    * np.arcsin(1./parameter_values['a_Rs'] *
-                                np.sqrt((1. + k)**2 - parameter_values['b']**2)
-                                / np.sin(parameter_values['i']*constants.deg2rad))
-                derived_parameters['T_41'] = True
+                if 'T_41' not in parameter_values:
+                    """ T_41 is a sampled parameter under use_transit_duration: keep it as sampled """
+                    parameter_values['T_41'] = parameter_values['P'] / np.pi \
+                        * np.arcsin(1./parameter_values['a_Rs'] *
+                                    np.sqrt((1. + k)**2 - parameter_values['b']**2)
+                                    / np.sin(parameter_values['i']*constants.deg2rad))
+                    derived_parameters['T_41'] = True
 
                 parameter_values['T_32'] = parameter_values['P'] / np.pi \
                     * np.arcsin(1./parameter_values['a_Rs'] *

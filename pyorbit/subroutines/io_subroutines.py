@@ -96,8 +96,10 @@ def zeus_save_to_cpickle(mc, starting_point, population, prob, state, sampler, t
     pickle.dump(state, open(mc.zeus_dir_output + add_prefix + "state.p", "wb"))
     pickle.dump(sampler, open(mc.zeus_dir_output + add_prefix + "sampler.p", "wb"))
     pickle.dump(sampler.chain, open(mc.zeus_dir_output + add_prefix + "sampler_chain.p", "wb"))
-    pickle.dump(sampler.lnprobability, open(mc.zeus_dir_output + add_prefix + "sampler_lnprobability.p", "wb"))
-    pickle.dump(sampler.acceptance_fraction,
+    # zeus 2.x has neither attribute; its chain is (steps, walkers, dim), unlike emcee.
+    pickle.dump(getattr(sampler, "lnprobability", None) if hasattr(sampler, "lnprobability") else sampler.get_log_prob(),
+                open(mc.zeus_dir_output + add_prefix + "sampler_lnprobability.p", "wb"))
+    pickle.dump(getattr(sampler, "acceptance_fraction", None),
                 open(mc.zeus_dir_output + add_prefix + "sampler_acceptance_fraction.p", "wb"))
 
 

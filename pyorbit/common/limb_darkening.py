@@ -2,7 +2,7 @@ from pyorbit.subroutines.common import \
     get_var_val,\
     get_2var_c1,\
     get_2var_c2,\
-    nested_sampling_prior_prepare
+    nested_sampling_prior_prepare,    giveback_priors
 
 from pyorbit.common.abstract_common import AbstractCommon
 
@@ -133,6 +133,20 @@ class LimbDarkening_2Pam(AbstractCommon):
                 self.prior_kind[pam] = 'Uniform'
 
         return
+
+    def return_priors(self, theta):
+        # Kipping: the priors belong to the sampled ld_q1, ld_q2, as in the nested-sampling
+        # prior transform. ld_c1, ld_c2 are derived and carry none; the inherited method
+        # evaluated only those (Uniform), so the MCMC samplers dropped the q priors.
+        if 'ld_q1' in self.sampler_parameters and 'ld_q2' in self.sampler_parameters:
+            prior_out = 0.00
+            for pam in ('ld_q1', 'ld_q2'):
+                assert self.spaces[pam] == 'Linear'
+                prior_out += giveback_priors(self.prior_kind[pam], self.bounds[pam],
+                                             self.prior_pams[pam],
+                                             theta[self.sampler_parameters[pam]])
+            return prior_out
+        return super().return_priors(theta)
 
     def define_starting_point_from_derived(self, starting_point, var_sampler):
         if var_sampler == 'ld_q1' or var_sampler == 'ld_q2':
